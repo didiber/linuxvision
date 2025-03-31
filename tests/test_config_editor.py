@@ -43,7 +43,7 @@ def test_sandboxed_save_validation_fail(editor, sample_config, mocker):
 def test_validate_json(editor, tmp_path):
     json_file = tmp_path / "test.json"
     json_file.write_text('{"key": "value"}')
-    assert editor.validate_config(json_file) is True
+    assert editor.validate_config(str(json_file)) is True
 
 # Testet Plugin-Integration mit Mock
 def test_plugin_validation(editor, mocker, tmp_path):
