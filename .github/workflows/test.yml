@@ -30,3 +30,11 @@ jobs:
           else
             echo "⚠️ Keine Tests gefunden!"
           fi
+
+      - name: Run Tests
+        run: |
+            pip install pytest-cov
+            pytest tests/ --cov=./ --cov-report=xml
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
