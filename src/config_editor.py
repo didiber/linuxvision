@@ -87,22 +87,22 @@ class ConfigEditor:
         return self._validate_syntax(sandbox_path) and self._validate_with_plugins(sandbox_path)
 
    def _validate_syntax(self, sandbox_path):
-        """Allgemeine Syntaxprüfung für JSON/YAML/INI."""
-        filepath = str(sandbox_path)
-        try:
-            if filepath.endswith(".json"):
-                with open(filepath, "r") as f:
-                    json.load(f)
-            elif filepath.endswith((".yaml", ".yml")):
-                import yaml  # Lazy import
-                with open(filepath, "r") as f:
-                    yaml.safe_load(f)
-            else:  # Key-Value-Format
-                self.parse_config(filepath)  # Hier ebenfalls String übergeben
-            return True
-        except Exception as e:
-            print(f"Syntaxfehler: {str(e)}")
-            return False
+    """Allgemeine Syntaxprüfung für JSON/YAML/INI."""
+    filepath = str(sandbox_path)
+    try:
+        if filepath.endswith(".json"):
+            with open(filepath, "r") as f:
+                json.load(f)
+        elif filepath.endswith((".yaml", ".yml")):
+            import yaml
+            with open(filepath, "r") as f:
+                yaml.safe_load(f)
+        else:
+            self.parse_config(filepath)
+        return True
+    except Exception as e:
+        print(f"Syntaxfehler: {str(e)}")
+        return False
 
     def _validate_with_plugins(self, sandbox_path):
         """Führt dienstspezifische Plugin-Validierungen durch."""
