@@ -1,7 +1,7 @@
 import pytest
 import os
 import shutil
-from src.config_editor import ConfigEditor
+from config_editor import ConfigEditor
 
 @pytest.fixture
 def editor():

@@ -1,7 +1,7 @@
 ---
 name: Test Pipeline
 
-'on':
+on:
   push:
     branches: ["feature/sicherheits-layer"]
   pull_request:
@@ -26,7 +26,6 @@ jobs:
 
       - name: Run Tests
         run: |
-          export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE/src
           if [ -d "tests" ]; then
             pytest tests/ --cov=./ --cov-report=xml
           else
