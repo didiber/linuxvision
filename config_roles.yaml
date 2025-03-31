@@ -1,0 +1,13 @@
+roles:
+  junior_admin:
+    allowed_params:
+      - nginx.worker_processes
+      - sshd.PermitRootLogin
+    max_value_length: 128
+  contributor:
+    allowed_params:
+      - all  # Erlaubt alle Änderungen, evtl. mit anschließendem Review-Prozess
+  moderator:
+    allowed_params:
+      - all
+    can_review: true
