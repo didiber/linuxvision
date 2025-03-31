@@ -88,7 +88,7 @@ class ConfigEditor:
 
    def _validate_syntax(self, sandbox_path):
         """Allgemeine Syntaxprüfung für JSON/YAML/INI."""
-        filepath = str(sandbox_path)  # Path-Objekt in String konvertieren
+        filepath = str(sandbox_path)
         try:
             if filepath.endswith(".json"):
                 with open(filepath, "r") as f:
