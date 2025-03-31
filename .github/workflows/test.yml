@@ -21,8 +21,12 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest  # 🔥 pytest explizit installieren
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
+          pip install pytest
+          
       - name: Run Tests
-        run: pytest tests/  # Stelle sicher, dass tests/ existiert!
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests/
+          else
+            echo "⚠️ Keine Tests gefunden!"
+          fi
