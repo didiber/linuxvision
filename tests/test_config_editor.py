@@ -39,6 +39,20 @@ def test_sandboxed_save_validation_fail(editor, sample_config, monkeypatch):
     monkeypatch.setattr(editor, 'validate_config', lambda path: False)
     assert editor.sandboxed_save(sample_config, "invalid_content") is False
 
+
+def test_sandboxed_save_cleanup(editor, sample_config, monkeypatch):
+    monkeypatch.setattr(editor, 'validate_config', lambda path: True)
+    sandbox_path = os.path.join(editor.sandbox_dir, os.path.basename(sample_config))
+    assert editor.sandboxed_save(sample_config, "key3=value3")
+    assert not os.path.exists(sandbox_path)
+
+
+def test_sandboxed_save_cleanup_fail(editor, sample_config, monkeypatch):
+    monkeypatch.setattr(editor, 'validate_config', lambda path: False)
+    sandbox_path = os.path.join(editor.sandbox_dir, os.path.basename(sample_config))
+    assert not editor.sandboxed_save(sample_config, "invalid")
+    assert not os.path.exists(sandbox_path)
+
 # Testet JSON-Validierung
 def test_validate_json(editor, tmp_path):
     json_file = tmp_path / "test.json"
@@ -95,3 +109,11 @@ def test_save_or_backup_failure(editor, sample_config, monkeypatch):
         assert "invalid" in f.read()
     with open(sample_config) as f:
         assert "invalid" not in f.read()
+
+
+def test_configeditor_del(tmp_path):
+    ed = ConfigEditor()
+    sandbox_dir = ed.sandbox_dir
+    assert os.path.isdir(sandbox_dir)
+    ed.__del__()
+    assert not os.path.exists(sandbox_dir)
