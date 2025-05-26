@@ -5,17 +5,10 @@ import shutil
 import os
 import json
 import importlib
+import importlib.util
 from pathlib import Path
 
-
-class ConfigValidator:
-    def detect(self, filepath: str) -> bool:
-        """Erkennt, ob das Plugin für die Datei zuständig ist."""
-        return False
-
-    def validate(self, filepath: str) -> bool:
-        """Führt die Validierung durch."""
-        return False
+from plugins import ConfigValidator
 
 
 class ConfigEditor:
@@ -27,7 +20,8 @@ class ConfigEditor:
         """Lädt alle Validierungs-Plugins dynamisch."""
         validators = []
         try:
-            plugin_dir = Path(__file__).parent / "plugins/validators"
+            # Plugins liegen auf Projektebene, nicht neben diesem Modul
+            plugin_dir = Path(__file__).resolve().parent.parent / "plugins" / "validators"
             for file in plugin_dir.glob("*.py"):
                 if file.name == "__init__.py":
                     continue
