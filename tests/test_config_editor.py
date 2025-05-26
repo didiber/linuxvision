@@ -1,7 +1,7 @@
 import pytest
 import os
 import shutil
-from src.config_editor import ConfigEditor
+from src.config_editor import ConfigEditor, ValidationResult
 
 @pytest.fixture
 def editor():
@@ -29,14 +29,14 @@ def test_parse_config_missing_file(editor):
     assert entries == []
 
 # Testet Sandbox-Speicherung mit Validierung
-def test_sandboxed_save_success(editor, sample_config, mocker):
-    mocker.patch.object(editor, 'validate_config', return_value=True)
+def test_sandboxed_save_success(editor, sample_config, monkeypatch):
+    monkeypatch.setattr(editor, 'validate_config', lambda path: True)
     assert editor.sandboxed_save(sample_config, "key3=value3") is True
     assert "key3" in open(sample_config).read()
 
 # Testet fehlgeschlagene Validierung
-def test_sandboxed_save_validation_fail(editor, sample_config, mocker):
-    mocker.patch.object(editor, 'validate_config', return_value=False)
+def test_sandboxed_save_validation_fail(editor, sample_config, monkeypatch):
+    monkeypatch.setattr(editor, 'validate_config', lambda path: False)
     assert editor.sandboxed_save(sample_config, "invalid_content") is False
 
 # Testet JSON-Validierung
@@ -46,14 +46,48 @@ def test_validate_json(editor, tmp_path):
     assert editor.validate_config(str(json_file)) is True
 
 # Testet Plugin-Integration mit Mock
-def test_plugin_validation(editor, mocker, tmp_path):
-    mock_validator = mocker.Mock()
-    mock_validator.detect.return_value = True
-    mock_validator.validate.return_value = True
-    editor.validators = [mock_validator]
+def test_plugin_validation(editor, tmp_path):
+    calls = {
+        'detect': 0,
+        'validate': 0,
+    }
+
+    class DummyValidator:
+        def detect(self, path):
+            calls['detect'] += 1
+            return True
+
+        def validate(self, path):
+            calls['validate'] += 1
+            return True
+
+    editor.validators = [DummyValidator()]
     
     test_file = tmp_path / "nginx.conf"
     test_file.write_text("server { ... }")
     
     assert editor.validate_config(test_file) is True
-    mock_validator.validate.assert_called_once()
+    assert calls['validate'] == 1
+
+
+# Tests for save_or_backup
+def test_save_or_backup_success(editor, sample_config, monkeypatch):
+    monkeypatch.setattr(editor, "validate_config", lambda path: True)
+    result = editor.save_or_backup(str(sample_config), "key3=value3")
+    assert isinstance(result, ValidationResult)
+    assert result.is_valid
+    assert "gespeichert" in result.message
+    assert "key3" in open(sample_config).read()
+    assert not os.path.exists(str(sample_config) + ".bak")
+
+
+def test_save_or_backup_failure(editor, sample_config, monkeypatch):
+    monkeypatch.setattr(editor, "validate_config", lambda path: False)
+    result = editor.save_or_backup(str(sample_config), "invalid")
+    assert not result.is_valid
+    backup_path = str(sample_config) + ".bak"
+    assert os.path.exists(backup_path)
+    with open(backup_path) as f:
+        assert "invalid" in f.read()
+    with open(sample_config) as f:
+        assert "invalid" not in f.read()
