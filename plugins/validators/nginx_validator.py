@@ -1,36 +1,33 @@
 import subprocess
+import shutil
 import os
 from pathlib import Path
 from .. import ConfigValidator
 
 class NginxValidator(ConfigValidator):
     def detect(self, filepath):
+        """Bestimmt, ob ``filepath`` eine Nginx-Konfigurationsdatei sein
+        könnte.
+
+        Neben der Dateiendung werden einige Schlüsselwörter im Inhalt
+        geprüft.
         """
-        Erkennt, ob eine Datei eine Nginx-Konfigurationsdatei ist.
-        Prüft sowohl den Dateinamen als auch den Inhalt.
-        """
-        filepath = Path(filepath)
+        path = Path(filepath)
 
-        # Prüfe Dateinamen-Muster
-        filename_patterns = [
-            'nginx.conf',
-            'default.conf',
-            '.conf'
-        ]
+        if path.suffix != ".conf":
+            return False
 
-        if any(pattern in filepath.name for pattern in filename_patterns):
-            # Zusätzliche Inhaltsüberprüfung
-            try:
-                with open(filepath, 'r') as f:
-                    content = f.read(1024)  # Nur die ersten 1024 Bytes lesen
-                    nginx_keywords = ['server', 'location', 'http', 'upstream']
-                    if any(keyword in content for keyword in nginx_keywords):
-                        return True
-            except Exception:
-                # Bei Leseproblemen verlassen wir uns nur auf den Dateinamen
-                pass
+        if path.name in {"nginx.conf", "default.conf"}:
+            return True
 
-        return False
+        try:
+            with open(path, "r", errors="ignore") as handle:
+                snippet = handle.read(1024)
+        except Exception:
+            return False
+
+        keywords = ["server", "location", "http", "upstream"]
+        return any(kw in snippet for kw in keywords)
 
     def validate(self, filepath):
         """
@@ -39,13 +36,7 @@ class NginxValidator(ConfigValidator):
         """
         try:
             # Prüfe, ob nginx installiert ist
-            which_result = subprocess.run(
-                ["which", "nginx"],
-                capture_output=True,
-                text=True
-            )
-
-            if which_result.returncode != 0:
+            if shutil.which("nginx") is None:
                 print("Warnung: nginx nicht installiert, überspringe Validierung")
                 return True
 
@@ -57,7 +48,15 @@ class NginxValidator(ConfigValidator):
             )
 
             # Prüfe das Ergebnis
-            success = result.returncode == 0 or "syntax is okay" in result.stderr
+            stderr = result.stderr.lower()
+            stdout = result.stdout.lower()
+            success = (
+                result.returncode == 0
+                or "syntax is ok" in stderr
+                or "syntax is ok" in stdout
+                or "syntax is okay" in stderr
+                or "syntax is okay" in stdout
+            )
 
             if not success:
                 error_message = result.stderr or result.stdout
