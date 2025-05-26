@@ -1,0 +1,7 @@
+[project]
+name = "linuxvision"
+version = "0.1.0"
+dependencies = [
+    "pytest"
+]
+
