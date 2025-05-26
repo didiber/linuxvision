@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-linuxvision-GUI.py
+linuxvision_gui.py
 ------------------
 Hauptschnittstelle für die LinuxVision Config Suite.
 Dieses Modul startet die GUI und initialisiert alle Kernkomponenten.
