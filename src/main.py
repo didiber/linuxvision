@@ -1,4 +1,8 @@
-"""Command line entry point for LinuxVision."""
+"""Entry point for the LinuxVision GUI."""
+
+from linuxvision_gui import main as gui_main
+
+
 
 import sys
 from PyQt5.QtWidgets import QApplication
@@ -14,4 +18,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    gui_main()
