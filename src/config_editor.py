@@ -7,15 +7,7 @@ import json
 import importlib
 from pathlib import Path
 
-
-class ConfigValidator:
-    def detect(self, filepath: str) -> bool:
-        """Erkennt, ob das Plugin für die Datei zuständig ist."""
-        return False
-
-    def validate(self, filepath: str) -> bool:
-        """Führt die Validierung durch."""
-        return False
+from plugins.__init__ import ConfigValidator
 
 
 class ConfigEditor:
