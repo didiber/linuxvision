@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linuxvision"
+version = "0.1.0"
+description = "Visual Linux configuration suite"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "AGPL-3.0-or-later"}
+authors = [
+    {name = "didiber"}
+]
+dependencies = [
+    "pyyaml>=6.0.1"
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
