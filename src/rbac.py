@@ -17,7 +17,8 @@ def is_change_allowed(user_role: str, param: str, roles_data: dict) -> bool:
 
 # Beispielnutzung:
 if __name__ == "__main__":
-    roles_data = load_roles(Path('config_roles.yaml'))
+    config_path = Path(__file__).parent.parent / "config" / "config_roles.yaml"
+    roles_data = load_roles(config_path)
     if is_change_allowed('junior_admin', 'nginx.worker_processes', roles_data):
         print("Änderung erlaubt!")
     else:
