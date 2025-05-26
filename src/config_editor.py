@@ -32,7 +32,7 @@ class ConfigEditor:
         """Lädt alle Validierungs-Plugins dynamisch."""
         validators = []
         try:
-            plugin_dir = (Path(__file__).resolve().parent.parent
+            plugin_dir = (Path(__file__).parent.parent
                           / "plugins" / "validators")
             for file in plugin_dir.glob("*.py"):
                 if file.name == "__init__.py":
