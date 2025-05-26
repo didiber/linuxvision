@@ -1,7 +1,10 @@
 import pytest
 import os
 import shutil
+from pathlib import Path
+import importlib.util
 from src.config_editor import ConfigEditor, ValidationResult
+from plugins import ConfigValidator
 
 @pytest.fixture
 def editor():
@@ -95,3 +98,40 @@ def test_save_or_backup_failure(editor, sample_config, monkeypatch):
         assert "invalid" in f.read()
     with open(sample_config) as f:
         assert "invalid" not in f.read()
+
+
+def test_validator_loading_with_real_plugin(tmp_path, monkeypatch):
+    """ConfigEditor should load NginxValidator when plugin file exists."""
+    # Prepare temporary plugin directory with the nginx validator
+    plugin_dir = tmp_path / "plugins" / "validators"
+    plugin_dir.mkdir(parents=True)
+    src_validator = (
+        Path(__file__).resolve().parents[1]
+        / "plugins"
+        / "validators"
+        / "nginx_validator.py"
+    )
+    shutil.copy(src_validator, plugin_dir / "nginx_validator.py")
+
+    def _tmp_loader(self):
+        validators = []
+        for file in plugin_dir.glob("*.py"):
+            if file.name == "__init__.py":
+                continue
+            module_name = f"plugins.validators.{file.stem}"
+            spec = importlib.util.spec_from_file_location(module_name, file)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            for attr in dir(module):
+                cls = getattr(module, attr)
+                if (
+                    isinstance(cls, type)
+                    and issubclass(cls, ConfigValidator)
+                    and cls is not ConfigValidator
+                ):
+                    validators.append(cls())
+        return validators
+
+    monkeypatch.setattr(ConfigEditor, "_load_validators", _tmp_loader)
+    editor = ConfigEditor()
+    assert any(type(v).__name__ == "NginxValidator" for v in editor.validators)
