@@ -19,12 +19,22 @@ def safe_edit(config_path: Path):
     """
     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
         temp_path = Path(tmp_file.name)
-        shutil.copy(config_path, temp_path)
+    shutil.copy(config_path, temp_path)
+    try:
         # Startet den Editor in einer Sandboxed-Umgebung
-        subprocess.run(['sudoedit', str(temp_path)])
+        result = subprocess.run(['sudoedit', str(temp_path)])
+        if result.returncode != 0:
+            print("Editor abgebrochen oder fehlgeschlagen!")
+            return
+
         # Validierung der bearbeiteten Datei
         if validate_config(temp_path):
             replace_original(config_path, temp_path)
             print("Änderungen erfolgreich übernommen!")
         else:
             print("Validierung fehlgeschlagen – Änderungen werden nicht übernommen!")
+    finally:
+        try:
+            temp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
