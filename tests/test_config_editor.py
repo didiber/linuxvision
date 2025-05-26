@@ -70,6 +70,10 @@ def test_plugin_validation(editor, tmp_path):
     assert calls['validate'] == 1
 
 
+def test_dynamic_loading(editor):
+    assert any(type(v).__name__ == "NginxValidator" for v in editor.validators)
+
+
 # Tests for save_or_backup
 def test_save_or_backup_success(editor, sample_config, monkeypatch):
     monkeypatch.setattr(editor, "validate_config", lambda path: True)

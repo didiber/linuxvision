@@ -5,9 +5,12 @@ import shutil
 import os
 import json
 import importlib
+import importlib.util
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional
+
+from plugins import ConfigValidator
 
 
 @dataclass
@@ -20,17 +23,6 @@ class ValidationResult:
     def __bool__(self) -> bool:  # pragma: no cover - simple truthiness helper
         return self.is_valid
 
-
-class ConfigValidator:
-    def detect(self, filepath: str) -> bool:
-        """Erkennt, ob das Plugin für die Datei zuständig ist."""
-        return False
-
-    def validate(self, filepath: str) -> bool:
-        """Führt die Validierung durch."""
-        return False
-
-
 class ConfigEditor:
     def __init__(self):
         self.sandbox_dir = tempfile.mkdtemp(prefix="linuxvision_")
@@ -40,7 +32,8 @@ class ConfigEditor:
         """Lädt alle Validierungs-Plugins dynamisch."""
         validators = []
         try:
-            plugin_dir = Path(__file__).parent / "plugins/validators"
+            plugin_dir = (Path(__file__).resolve().parent.parent
+                          / "plugins" / "validators")
             for file in plugin_dir.glob("*.py"):
                 if file.name == "__init__.py":
                     continue
@@ -53,7 +46,7 @@ class ConfigEditor:
                     cls = getattr(module, attr)
                     if (isinstance(cls, type)
                             and issubclass(cls, ConfigValidator)
-                            and cls != ConfigValidator):
+                            and cls is not ConfigValidator):
                         validators.append(cls())
         except Exception as e:
             print(f"Plugin-Loader-Fehler: {str(e)}")
