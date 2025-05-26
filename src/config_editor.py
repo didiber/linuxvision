@@ -28,6 +28,14 @@ class ConfigEditor:
         self.sandbox_dir = tempfile.mkdtemp(prefix="linuxvision_")
         self.validators = self._load_validators()
 
+    def __del__(self):
+        """Räumt das temporäre Sandbox-Verzeichnis auf."""
+        if hasattr(self, "sandbox_dir") and os.path.isdir(self.sandbox_dir):
+            try:
+                shutil.rmtree(self.sandbox_dir)
+            except OSError:
+                pass
+
     def _load_validators(self):
         """Lädt alle Validierungs-Plugins dynamisch."""
         validators = []
@@ -74,11 +82,11 @@ class ConfigEditor:
 
     def sandboxed_save(self, filepath, new_content):
         """Sichert Änderungen über eine Sandbox."""
+        sandbox_path = f"{self.sandbox_dir}/{os.path.basename(filepath)}"
         try:
-            sandbox_path = f"{self.sandbox_dir}/{os.path.basename(filepath)}"
             shutil.copy2(filepath, sandbox_path)
 
-            with open(sandbox_path, 'w') as f:
+            with open(sandbox_path, "w") as f:
                 f.write(new_content)
 
             if self.validate_config(sandbox_path):
@@ -89,6 +97,12 @@ class ConfigEditor:
         except Exception as e:
             print(f"Sandbox-Fehler: {str(e)}")
             return False
+        finally:
+            if os.path.exists(sandbox_path):
+                try:
+                    os.remove(sandbox_path)
+                except OSError:
+                    pass
 
     def save_or_backup(self, filepath: str, new_content: str) -> ValidationResult:
         """Save content if valid, otherwise create a .bak backup.
