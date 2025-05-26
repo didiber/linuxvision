@@ -6,6 +6,19 @@ import os
 import json
 import importlib
 from pathlib import Path
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass
+class ValidationResult:
+    """Represents the result of a validation with an optional message."""
+
+    is_valid: bool
+    message: str = ""
+
+    def __bool__(self) -> bool:  # pragma: no cover - simple truthiness helper
+        return self.is_valid
 
 
 class ConfigValidator:
@@ -83,6 +96,46 @@ class ConfigEditor:
         except Exception as e:
             print(f"Sandbox-Fehler: {str(e)}")
             return False
+
+    def save_or_backup(self, filepath: str, new_content: str) -> ValidationResult:
+        """Save content if valid, otherwise create a .bak backup.
+
+        Parameters
+        ----------
+        filepath: str
+            Path to the target configuration file.
+        new_content: str
+            Content to be validated and written.
+        Returns
+        -------
+        ValidationResult
+            Result of the validation with information about created backup.
+        """
+
+        tmp_path = os.path.join(self.sandbox_dir, os.path.basename(filepath))
+        try:
+            with open(tmp_path, "w") as tmp_file:
+                tmp_file.write(new_content)
+
+            validation = self.validate_config(tmp_path)
+            if validation:
+                os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=True)
+                with open(filepath, "w") as dest:
+                    dest.write(new_content)
+                return ValidationResult(True, "Konfiguration gespeichert.")
+
+            backup_path = f"{filepath}.bak"
+            with open(backup_path, "w") as backup:
+                backup.write(new_content)
+            return ValidationResult(False, f"Validierung fehlgeschlagen. Backup unter {backup_path} erstellt.")
+        except Exception as exc:
+            return ValidationResult(False, f"Fehler beim Speichern: {exc}")
+        finally:
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
 
     def validate_config(self, sandbox_path):
         """Hybride Validierung: Allgemeine Syntax + Plugin-Checks."""
